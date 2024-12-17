@@ -144,6 +144,8 @@ class GoPhase:
             im = self.board_bgr
         elif name == 'gray':
             im = self.board_gray
+        elif name == 'edge':
+            im = self.im_edge
         else:
             im = self.im_bgr
         
@@ -178,8 +180,9 @@ class GoPhase:
         
 
 if __name__ == '__main__':
-    go = GoPhase('demo.jpg')
+    go = GoPhase('demo4.jpg')
     go.show_image('origin')
     go.show_image('gray')
+    go.show_image('edge')
     go.show_phase()
     go.show_result()
