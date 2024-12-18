@@ -41,7 +41,7 @@ else:
 	print('\t右上角：(%d,%d)'%(rect[2][0],rect[2][1]))
 	print('\t右下角：(%d,%d)'%(rect[3][0],rect[3][1]))
 
-	
+#红色的十字标注在原始的彩色图像上
 im = np.copy(im_bgr)
 for p in rect:
 	im = cv2.line(im, (p[0]-10,p[1]), (p[0]+10,p[1]), (0,0,255), 1)
@@ -60,5 +60,59 @@ cv2.imshow('Resized Image', resized_image)
 
 cv2.waitKey(0)
 
+if not rect is None:
+    pts1 = np.float32([(10,10), (10,650), (650,10), (650,650)]) # 预期的棋盘四个角的坐标
+    pts2 = np.float32(rect) # 当前找到的棋盘四个角的坐标
+    m = cv2.getPerspectiveTransform(pts2, pts1) # 生成透视矩阵
+    board_gray = cv2.warpPerspective(im_gray, m, (660, 660)) # 执行透视变换
+    board_bgr = cv2.warpPerspective(im_bgr, m, (660, 660)) # 执行透视变换
+
+cv2.imshow('go', board_gray)
+cv2.imwrite('rect.jpg', board_gray)
+
+cv2.waitKey(0)
+
+
+circles = cv2.HoughCircles(board_gray, cv2.HOUGH_GRADIENT, 1, 20, param1=90, param2=16, minRadius=10, maxRadius=20) # 圆检测
+xs, ys = circles[0,:,0], circles[0,:,1] # 所有棋子的x坐标和y坐标
+xs.sort()
+ys.sort()
+
+k = 1
+while xs[k]-xs[:k].mean() < 15:
+    k += 1
+x_min = int(round(xs[:k].mean()))
+
+k = 1
+while ys[k]-ys[:k].mean() < 15:
+    k += 1
+
+y_min = int(round(ys[:k].mean()))
+
+k = -1
+while xs[k:].mean() - xs[k-1] < 15:
+    k -= 1
+x_max = int(round(xs[k:].mean()))
+
+k = -1
+while ys[k:].mean() - ys[k-1] < 15:
+    k -= 1
+y_max = int(round(ys[k:].mean()))
+
+if abs(600-(x_max-x_min)) < abs(600-(y_max-y_min)):
+    v_min, v_max = x_min, x_max
+else:
+    v_min, v_max = y_min, y_max
+    
+pts1 = np.float32([[22, 22], [22, 598], [598, 22], [598, 598]])  # 棋盘四个角点的最终位置
+pts2 = np.float32([(v_min, v_min), (v_min, v_max), (v_max, v_min), (v_max, v_max)])
+m = cv2.getPerspectiveTransform(pts2, pts1)
+board_gray = cv2.warpPerspective(board_gray, m, (620, 620))
+board_bgr = cv2.warpPerspective(board_bgr, m, (620, 620))
+cv2.line(im, (p[0]-10,p[1]), (p[0]+10,p[1]), (0,0,255), 1)
+cv2.imshow('go', board_gray)
+cv2.imwrite('rect.jpg', board_gray)
+
+cv2.waitKey(0)
 
 cv2.destroyAllWindows()

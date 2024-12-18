@@ -99,7 +99,7 @@ class GoPhase:
         else:
             v_min, v_max = y_min, y_max
             
-        pts1 = np.float32([[22, 22], [22, 598], [598, 22], [598, 598]])  # 棋盘四个角点的最终位置
+        pts1 = np.float32([[38, 38], [38, 622], [622, 38], [622, 622]])  # 棋盘四个角点的最终位置
         pts2 = np.float32([(v_min, v_min), (v_min, v_max), (v_max, v_min), (v_max, v_max)])
         m = cv2.getPerspectiveTransform(pts2, pts1)
         self.board_gray = cv2.warpPerspective(self.board_gray, m, (620, 620))

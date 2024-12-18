@@ -41,7 +41,7 @@ else:
 	print('\t右上角：(%d,%d)'%(rect[2][0],rect[2][1]))
 	print('\t右下角：(%d,%d)'%(rect[3][0],rect[3][1]))
 
-	
+#红色的十字标注在原始的彩色图像上
 im = np.copy(im_bgr)
 for p in rect:
 	im = cv2.line(im, (p[0]-10,p[1]), (p[0]+10,p[1]), (0,0,255), 1)
@@ -60,5 +60,34 @@ cv2.imshow('Resized Image', resized_image)
 
 cv2.waitKey(0)
 
+if not rect is None:
+    pts1 = np.float32([(10,10), (10,650), (650,10), (650,650)]) # 预期的棋盘四个角的坐标
+    pts2 = np.float32(rect) # 当前找到的棋盘四个角的坐标
+    m = cv2.getPerspectiveTransform(pts2, pts1) # 生成透视矩阵
+    board_gray = cv2.warpPerspective(im_gray, m, (660, 660)) # 执行透视变换
+    board_bgr = cv2.warpPerspective(im_bgr, m, (660, 660)) # 执行透视变换
 
+
+cv2.line(board_gray, (330-10,330), (330+10,330), (255,0,0), 1)
+cv2.line(board_gray, (330,330-10), (330,330+10), (255,0,0), 1)
+
+cv2.imshow('rect.jpg', board_gray)
+
+cv2.waitKey(0)
+
+series = np.linspace(36, 620, 13, dtype=np.int64)
+
+for i in series:
+	im = cv2.line(board_bgr, (36, i), (620, i), (0,255,0), 1)
+	im = cv2.line(board_bgr, (i, 36), (i, 620), (0,255,0), 1)
+	
+cv2.imshow('go', im)
+
+cv2.waitKey(0)
+
+mesh = np.linspace(36, 620, 13, dtype=np.int64)
+rows, cols = np.meshgrid(mesh, mesh)
+
+print(rows)
+print(cols)
 cv2.destroyAllWindows()
