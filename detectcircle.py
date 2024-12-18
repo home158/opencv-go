@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 # 读取图像
-img = cv2.imread('rect.jpg')
+img = cv2.imread('tmp\\board_gray.jpg')
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 # 检测圆形

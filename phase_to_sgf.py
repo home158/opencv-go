@@ -32,7 +32,7 @@ class MoveInfo:
 (18, 0) (18, 1) (18, 2) ...... (18,18)
 """
 # 前一手
-phase_0 = np.zeros((19, 19), dtype=np.ubyte)
+phase_0 = np.zeros((13, 13), dtype=np.ubyte)
 # 次一手
 phase_1 = np.array([
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
