@@ -30,6 +30,7 @@ class GoPhase:
         self.im_bgr = None          # 棋盤原圖
         self.im_removebg_bgr = None # 棋盤去背彩圖
         self.board_gray = None #平面校正的棋盤
+        self.board_gray_threshold = None #平面校正的棋盤
         self.board_bgr = None #平面校正的棋盤
         self.im_rect_line = None #標記棋盤四角
         self.board_bgr_line = None #標記棋盤線
@@ -79,13 +80,16 @@ class GoPhase:
         for p in self.rect:
             self.im_rect_line = cv2.line(self.im_rect_line, (p[0]-10,p[1]), (p[0]+10,p[1]), (0,0,255), 1)
             self.im_rect_line = cv2.line(self.im_rect_line, (p[0],p[1]-10), (p[0],p[1]+10), (0,0,255), 1)
-
+        edgegap = 10
         if not self.rect is None:
-            pts1 = np.float32([(0,0), (0,660), (660,0), (660,660)]) # 预期的棋盘四个角的坐标
+            pts1 = np.float32([(edgegap,edgegap), (edgegap,660+edgegap), (660+edgegap,edgegap), (660+edgegap,660+edgegap)]) # 预期的棋盘四个角的坐标
             pts2 = np.float32(self.rect) # 当前找到的棋盘四个角的坐标
             m = cv2.getPerspectiveTransform(pts2, pts1) # 生成透视矩阵
             self.board_gray = cv2.warpPerspective(self.im_gray, m, (660, 660)) # 执行透视变换
             self.board_bgr = cv2.warpPerspective(self.im_bgr, m, (660, 660)) # 执行透视变换
+            #應用二值化 (Binary Threshold)
+            _, self.board_gray_threshold = cv2.threshold(self.board_gray, 127, 255, cv2.THRESH_BINARY)
+
         
 
     def _location_grid(self):
@@ -118,7 +122,7 @@ class GoPhase:
             minDist=30,
             param1=50,
             param2=30,
-            minRadius=20,
+            minRadius=10,
             maxRadius=30
         )
 
@@ -135,20 +139,45 @@ class GoPhase:
                 cv2.circle(self.board_bgr_circles, (x, y), 2, (0, 0, 255), 3)
 
                 # 随机给定一个坐标
-                random_point = (x, y)  # 示例随机坐标 (x, y)
-                x_random, y_random = random_point
+                circle_point = (x, y)  # 示例随机坐标 (x, y)
+                x_circle, y_circle = circle_point
 
                 # 计算欧几里得距离
-                distances = np.sqrt((cols - x_random) ** 2 + (rows - y_random) ** 2)
+                distances = np.sqrt((cols - x_circle) ** 2 + (rows - y_circle) ** 2)
 
                 # 找到距离最小值的索引
                 min_idx = np.unravel_index(np.argmin(distances), distances.shape)
 
                 # 输出结果
                 row_index, col_index = min_idx
-                print(f"最接近的点的行索引: {row_index}, 列索引: {col_index}")
-                self.phase[row_index,col_index] = 2
-                print(self.phase)
+
+                # 檢查坐標是否有效 (避免超出圖片邊界)
+                radius = 10
+                if (circle_point[0] - radius < 0 or circle_point[1] - radius < 0 or 
+                    circle_point[0] + radius >= self.board_gray_threshold.shape[1] or 
+                    circle_point[1] + radius >= self.board_gray_threshold.shape[0]):
+                    print("Error: The specified circle exceeds the image boundaries.")
+                else:
+                    # 建立圓形遮罩
+                    mask = np.zeros_like(self.board_gray_threshold, dtype=np.uint8)
+                    cv2.circle(mask, circle_point, radius, 255, -1)
+
+                    # 使用遮罩提取圓形區域
+                    region = cv2.bitwise_and(self.board_gray_threshold, self.board_gray_threshold, mask=mask)
+
+                    # 計算圓形區域內的平均值
+                    mean_value = cv2.mean(self.board_gray_threshold, mask=mask)[0]  # 只取灰階通道的平均值
+
+                    # 輸出平均值
+
+
+                val = self.board_gray_threshold[circle_point]
+
+                print(f"最接近的点的行索引: {row_index}, 列索引: {col_index} , 坐標 {circle_point}, 顏色{val} {mean_value}" )
+                if mean_value < 127:
+                    self.phase[row_index,col_index] = 1
+                if mean_value > 127:
+                    self.phase[row_index,col_index] = 2
 
                 
     def _phase_to_sgf(self):
@@ -202,6 +231,8 @@ class GoPhase:
             im = self.board_bgr_line
         elif name == 'board_bgr_circles':
             im = self.board_bgr_circles
+        elif name == 'board_gray_threshold':
+            im = self.board_gray_threshold
 
         
         if im is None:
@@ -225,15 +256,16 @@ class GoPhase:
         
 
 if __name__ == '__main__':
-    go = GoPhase('pic/13x13/1.jpg')
+    go = GoPhase('pic/13x13/10.jpg')
 
-#    go.show_image("im_bgr",'原圖')
-#
-#    go.show_image("im_removebg_bgr",'去背彩圖')
-#    go.show_image("im_gray",'去背彩圖')
-#    go.show_image("im_rect_line",'im_rect_line')
-#    go.show_image("im_edge",'im_edge')
-#    go.show_image("board_gray",'board_gray')
-#    go.show_image("board_bgr",'board_bgr')
-#    go.show_image("board_bgr_line",'board_bgr_line')
+    go.show_image("im_bgr",'原圖')
+
+    go.show_image("im_removebg_bgr",'去背彩圖')
+    go.show_image("im_gray",'去背彩圖')
+    go.show_image("im_rect_line",'im_rect_line')
+    go.show_image("im_edge",'im_edge')
+    go.show_image("board_gray",'board_gray')
+    go.show_image("board_bgr",'board_bgr')
+    go.show_image("board_bgr_line",'board_bgr_line')
     go.show_image("board_bgr_circles",'board_bgr_circles')
+    go.show_image("board_gray_threshold",'board_gray_threshold')
