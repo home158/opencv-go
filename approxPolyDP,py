@@ -1,0 +1,38 @@
+import cv2
+import numpy as np
+
+# 创建一个空白图像
+image = np.zeros((400, 400), dtype=np.uint8)
+
+# 定义梯形的四个点
+trapezoid_points = np.array([[100, 300], [300, 300], [350, 100], [50, 100]], dtype=np.int32)
+
+# 绘制梯形
+cv2.fillPoly(image, [trapezoid_points], 255)
+
+# 添加一个小半圆（位于梯形的右上角）
+center = (320, 295)  # 半圆中心位置
+radius = 5
+  # 半圆的半径
+cv2.circle(image, center, radius, 255, -1)  # 绘制填充的半圆
+
+# 使用形态学腐蚀去除小半圆的影响
+kernel = np.ones((5, 5), np.uint8)  # 定义内核大小
+image_eroded = cv2.erode(image, kernel, iterations=2)  # 腐蚀操作，去除小半圆部分
+
+# 查找轮廓
+contours, _ = cv2.findContours(image_eroded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+# 绘制凸包
+for contour in contours:
+    # 计算凸包
+    hull = cv2.convexHull(contour)
+
+    # 绘制凸包（忽略小半圆的影响）
+    cv2.drawContours(image, [hull], -1, (0, 255, 0), 2)  # 使用绿色绘制凸包
+
+# 显示结果
+cv2.imshow('Trapezoid with Convex Hull Ignoring Small Circle', image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+

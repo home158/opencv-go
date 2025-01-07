@@ -37,11 +37,10 @@ class GoPhase:
         self.im_edge = cv2.Canny(self.im_gray, 30, 50) # 边缘检测
         self.phase = np.zeros((13, 13), dtype=np.ubyte)
 
-
         self._find_chessboard()
-        #self._location_grid()
-        #self._identify_chessman()
-        #self._phase_to_sgf()
+        self._location_grid()
+        self._identify_chessman()
+        self._phase_to_sgf()
 
     def _find_chessboard(self):
 
@@ -52,7 +51,6 @@ class GoPhase:
             cv2.drawContours(self.im_removebg_bgr, [hull], -1, (0, 255, 0), 2)     # 藍色：凸包
 
             epsilon = 0.1 * cv2.arcLength(hull, True) # 忽略弧长10%的点
-            print(epsilon)
             approx = cv2.approxPolyDP(hull, epsilon, True) # 将凸包拟合为多边形
 
             if len(approx) == 4 and cv2.isContourConvex(approx): # 如果是凸四边形
@@ -236,8 +234,8 @@ class GoPhase:
             print('识别失败，无图像可供显示')
         else:
             # Resize to 50% of the original size
-            width = int(im.shape[1] * 0.78)
-            height = int(im.shape[0] * 0.78)
+            width = int(im.shape[1] * 0.50)
+            height = int(im.shape[0] * 0.50)
             new_dim = (width, height)
 
             resized_image = cv2.resize(im, new_dim, interpolation=cv2.INTER_AREA)
@@ -253,11 +251,10 @@ class GoPhase:
         
 
 if __name__ == '__main__':
-    go = GoPhase('pic/13x13/17.jpg')
-    go.show_image("im_bgr",'im_bgr')
-    go.show_image("im_removebg_bgr",'im_removebg_bgr')
+    go = GoPhase('pic/13x13/1.jpg')
     go.show_image("im_edge",'im_edge')
-
+#
+    go.show_image("im_removebg_bgr",'去背彩圖')
 #    go.show_image("im_gray",'去背彩圖')
     go.show_image("im_rect_line",'im_rect_line')
 #    go.show_image("im_edge",'im_edge')

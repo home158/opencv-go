@@ -182,7 +182,7 @@ class GoPhase:
 
 if __name__ == '__main__':
     remover = BlueBackgroundRemover()
-    input_file = r'pic/13x13/1.jpg'
+    input_file = r'pic/13x13/2.jpg'
     output_file = "output.png"
     remover.remove_blue_background(input_file, output_file)
 
